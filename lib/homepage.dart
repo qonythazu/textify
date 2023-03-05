@@ -49,24 +49,30 @@ class _PdfUploaderState extends State<PdfUploader> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pdf Uploader'),
+        title: const Text(
+          'Textify',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _pickPdf,
+        child: const Icon(Icons.upload, color: Colors.white,),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            ElevatedButton(
-              onPressed: _pickPdf,
-              child: Text('Pilih PDF'),
-            ),
             SizedBox(height: 16),
             if (_pdfFile != null)
               Text(_pdfFile!.path),
             SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _uploadPdf,
-              child: Text('Upload PDF'),
-            ),
+            // ElevatedButton(
+            //   onPressed: _uploadPdf,
+            //   child: Text('Upload PDF'),
+            // ),
           ],
         ),
       ),
