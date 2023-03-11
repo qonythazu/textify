@@ -1,49 +1,69 @@
 import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
-import 'package:textify/pdfs.dart';
-import 'package:textify/pdfs_viewer.dart';
+import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 
-class PdfUploader extends StatefulWidget {
+class PdfToImageConverter extends StatefulWidget {
+  final String pdfPath;
+
+  const PdfToImageConverter({Key? key, required this.pdfPath}) : super(key: key);
+
   @override
-  _PdfUploaderState createState() => _PdfUploaderState();
+  _PdfToImageConverterState createState() => _PdfToImageConverterState();
 }
 
-class _PdfUploaderState extends State<PdfUploader> {
+class _PdfToImageConverterState extends State<PdfToImageConverter> {
+  List<Uint8List> _pages = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _convertPdfToImages();
+  }
+
+  Future<void> _convertPdfToImages() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final document = await PdfDocument.openFile(widget.pdfPath);
+
+      for (int i = 1; i <= document.pagesCount; i++) {
+        final page = await document.getPage(i);
+
+        final pageImage = await page.render(
+          width: page.width,
+          height: page.height,
+        );
+
+        _pages.add(pageImage!.bytes);
+
+        await page.close();
+      }
+
+      await document.close();
+    } catch (e) {
+      print('Error occurred while rendering PDF: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Textify',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold
-          ),
+    return _isLoading
+    ? CircularProgressIndicator()
+    : Container(
+        child: ListView.builder(
+          itemCount: _pages.length,
+          itemBuilder: (context, index) {
+            return Image.memory(_pages[index]);
+          },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final file = await PDFs.pickFiles();
-
-          if (file == null) return;
-          openPDF(context, file);
-        },
-        child: const Icon(Icons.upload, color: Colors.white,),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-          ],
-        ),
-      ),
-    );
+      );
   }
-  void openPDF(BuildContext context, File file) => Navigator.of(context).push(
-    MaterialPageRoute(builder: (context) => PDFsViewer(file : file)),
-  );
 }

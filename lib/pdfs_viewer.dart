@@ -5,8 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path/path.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
+
 
 class PDFsViewer extends StatefulWidget {
   final File file;
@@ -24,12 +23,12 @@ class _PDFsViewerState extends State<PDFsViewer> {
       appBar: AppBar(
         title: Text(
           name, 
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold
           ),
         ),
-        iconTheme:IconThemeData(color: Colors.white)
+        iconTheme:const IconThemeData(color: Colors.white)
       ),
       body: PDFView(
         filePath: widget.file.path,
