@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.grey,
       ),
-      home: const PdfToImageConverter(pdfPath: '',),
+      home: const PdfToImageConverter(),
     );
   }
 }
