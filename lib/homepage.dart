@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class PdfToImageConverter extends StatefulWidget {
   const PdfToImageConverter({Key? key}) : super(key: key);
@@ -70,34 +67,16 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
     }
   }
 
-  Future<void> _saveImage(Uint8List bytes) async {
-    final status = await Permission.storage.request();
-
-    if (status.isGranted) {
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
-      final filePath = path.join(directory!.path, fileName);
-
-      File(filePath).writeAsBytes(bytes).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image saved to $filePath')),
-        );
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permission denied')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PDF to Image Converter',
-        style: TextStyle(
-          color: Colors.white
-        ),),
+        title: const Text('Textify',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -106,32 +85,82 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
           : _pages.isEmpty
               ? const Center(
                   child: Text('Please select a PDF file',
-                  style: TextStyle(
-                    color: Colors.white
-                  ),),
-                )
-              : Container(
-                  child: ListView.builder(
-                    itemCount: _pages.length,
-                    itemBuilder: (context, index) {
-                      return Column(
-                        children: [
-                          Image.memory(_pages[index]),
-                          SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: () => _saveImage(_pages[index]),
-                            child: Text('Download Image'),
-                          ),
-                          SizedBox(height: 10),
-                        ],
-                      );
-                    },
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold
+                    ),
                   ),
-                ),
-      floatingActionButton: FloatingActionButton(
+                )
+              : ImageListView(pages: _pages),
+      floatingActionButton: _pages.isNotEmpty ? null : FloatingActionButton(
         onPressed: _pickPDF,
         tooltip: 'Pick PDF',
-        child: const Icon(Icons.file_upload, color: Colors.white,),
+        child: const Icon(Icons.file_upload, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class ImageListView extends StatelessWidget {
+  final List<Uint8List> pages;
+
+  const ImageListView({Key? key, required this.pages}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+      itemCount: pages.length,
+      itemBuilder: (context, index) {
+        return Column(
+          children: [
+            Image.memory(pages[index]),
+            const SizedBox(height: 10),
+            const Divider(),
+          ],
+        );
+      },
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: FloatingActionButton.extended(
+              onPressed: (){},
+              label: Row(
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.only(right: 4.0),
+                      child: Icon(Icons.swap_horiz, color: Colors.white,),
+                    ),
+                    Text("DOCX",
+                      style: TextStyle(
+                        color: Colors.white
+                      ),
+                    )
+                  ],
+                ),
+            ),
+          ),
+          FloatingActionButton.extended(
+            onPressed: (){},
+            label: Row(
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.only(right: 4.0),
+                    child: Icon(Icons.swap_horiz, color: Colors.white,),
+                  ),
+                  Text("PPTX",
+                    style: TextStyle(
+                      color: Colors.white
+                    ),
+                  )
+                ],
+              ),
+          ),
+        ],
       ),
     );
   }
