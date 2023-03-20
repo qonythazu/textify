@@ -19,7 +19,7 @@ class PdfToImageConverter extends StatefulWidget {
 class _PdfToImageConverterState extends State<PdfToImageConverter> {
   final List<Uint8List> _pages = [];
   bool _isLoading = false;
-  late String _pdfPath; 
+  late String _pdfPath;
 
   Future<void> _pickPDF() async {
     try {
@@ -32,9 +32,47 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
 
       setState(() {
         _pdfPath = result.files.single.path!;
+        _convertPdfToImages();
       });
     } on PlatformException catch (e) {
       print('Error occurred while picking the file: $e');
+    }
+  }
+
+  Future<void> _convertPdfToImages() async {
+    setState(() {
+      _isLoading = true;
+      _pages.clear();
+    });
+
+    try {
+      final document = await PdfDocument.openFile(_pdfPath);
+
+      for (int i = 1; i <= document.pagesCount; i++) {
+        final page = await document.getPage(i);
+
+        final pageImage = await page.render(
+          width: page.width,
+          height: page.height,
+        );
+
+        final tempDir = await getTemporaryDirectory();
+        final imagePath = '${tempDir.path}/temp.jpg';
+
+        final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
+
+        _pages.add(File(imagePath).readAsBytesSync());
+
+        await page.close();
+      }
+
+      await document.close();
+    } catch (e) {
+      print('Error occurred while rendering PDF: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -50,7 +88,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
         ),
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(),
             )
           : _pages.isEmpty
