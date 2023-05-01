@@ -48,6 +48,7 @@ dependencies:
   image: ^4.0.15
   permission_handler: ^10.2.0
   flutter_tesseract_ocr: ^0.4.20
+  web_socket_channel: ^2.3.0
 
 dev_dependencies:
   flutter_test:
