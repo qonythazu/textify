@@ -20,7 +20,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   bool _isLoading = false;
   late String _pdfPath;
 
-  Future<void> _pickPDF() async {
+  Future<void> _pickPDFtoDOCX() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -31,14 +31,14 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
 
       setState(() {
         _pdfPath = result.files.single.path!;
-        _convertPdfToImages();
+        _convertPdfToImagesDOCX();
       });
     } on PlatformException catch (e) {
       print('Error occurred while picking the file: $e');
     }
   }
 
-  Future<void> _convertPdfToImages() async {
+  Future<void> _convertPdfToImagesDOCX() async {
     setState(() {
       _isLoading = true;
       _pages.clear();
@@ -69,7 +69,92 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
 
       await document.close();
 
-      _uploadImage(_pages[0]);
+      _uploadImageDOCX(_pages[0]);
+      
+    } catch (e) {
+      print('Error occurred while rendering PDF: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Upload gambar ke node js (DOCX)
+  Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://192.168.1.20:3000/upload?fileType=docx'),
+    );
+    request.files.add(http.MultipartFile.fromBytes(
+      'image',
+      imageBytes,
+      filename: 'image.png',
+    ));
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        print('Image uploaded successfully');
+      } else {
+        print('Failed to upload image. Error code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error occurred while uploading image: $e');
+    }
+  }
+
+  Future<void> _pickPDFtoPPTX() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result == null || result.files.single.path == null) return;
+
+      setState(() {
+        _pdfPath = result.files.single.path!;
+        _convertPdfToImagesPPTX();
+      });
+    } on PlatformException catch (e) {
+      print('Error occurred while picking the file: $e');
+    }
+  }
+
+  Future<void> _convertPdfToImagesPPTX() async {
+    setState(() {
+      _isLoading = true;
+      _pages.clear();
+    }); 
+
+    try {
+      final document = await PdfDocument.openFile(_pdfPath);
+
+      for (int i = 1; i <= document.pagesCount; i++) {
+        final page = await document.getPage(i);
+
+        // Render PDF page to image
+        final pageImage = await page.render(
+          width: page.width,
+          height: page.height
+        );
+
+        // Save image to temporary directory
+        final tempDir = await getTemporaryDirectory();
+        final imagePath = '${tempDir.path}/image.png';
+
+        final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
+
+        _pages.add(File(imagePath).readAsBytesSync());
+
+        await page.close();
+      }
+
+      await document.close();
+
+      _uploadImagePPTX(_pages[0]);
+      
     } catch (e) {
       print('Error occurred while rendering PDF: $e');
     } finally {
@@ -80,11 +165,11 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   }
 
 
-  // Upload gambar ke node js
-  Future<void> _uploadImage(Uint8List imageBytes) async {
+  // Upload gambar ke node js (PPTX)
+  Future<void> _uploadImagePPTX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.1.20:3000/upload'),
+      Uri.parse('http://192.168.1.20:3000/upload?fileType=pptx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
@@ -115,10 +200,34 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
           ),
         ),
       ),
-      floatingActionButton: _pages.isNotEmpty ? null : FloatingActionButton(
-        onPressed: _pickPDF,
-        tooltip: 'Pick PDF',
-        child: const Icon(Icons.file_upload, color: Colors.white),
+      floatingActionButton: _pages.isNotEmpty 
+      ? null
+      : Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: _pickPDFtoDOCX,
+            tooltip: 'Pick PDF to DOCX',
+            label: const Text(
+              'DOCX',
+              style: TextStyle(
+                color: Colors.white
+              ),
+            ),
+            icon: const Icon(Icons.file_upload, color: Colors.white),
+          ),
+          FloatingActionButton.extended(
+            onPressed: _pickPDFtoPPTX,
+            tooltip: 'Pick PDF to PPTX',
+            label: const Text(
+              'PPTX',
+              style: TextStyle(
+                color: Colors.white
+              ),
+            ),
+            icon: const Icon(Icons.file_upload, color: Colors.white),
+          )
+        ],
       ),
       body: _isLoading
           ? const Center(
