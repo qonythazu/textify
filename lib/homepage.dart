@@ -164,7 +164,6 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
     }
   }
 
-
   // Upload gambar ke node js (PPTX)
   Future<void> _uploadImagePPTX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
@@ -201,7 +200,14 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
         ),
       ),
       floatingActionButton: _pages.isNotEmpty 
-      ? null
+      ? FloatingActionButton(
+        onPressed: () {
+          Navigator.pushReplacement(context, 
+            MaterialPageRoute(builder: (context) => const PdfToImageConverter())
+          );
+        },
+        child: const Icon(Icons.arrow_back, color: Colors.white),
+      )
       : Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
