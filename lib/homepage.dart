@@ -84,7 +84,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.1.20:3000/upload?fileType=docx'),
+      Uri.parse('http://192.168.43.222:3000/upload?fileType=docx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
@@ -168,7 +168,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _uploadImagePPTX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.1.20:3000/upload?fileType=pptx'),
+      Uri.parse('http://192.168.43.222:3000/upload?fileType=pptx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
@@ -191,6 +191,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Textify',
           style: TextStyle(
@@ -208,43 +209,58 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
         },
         child: const Icon(Icons.arrow_back, color: Colors.white),
       )
-      : Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: _pickPDFtoDOCX,
-            tooltip: 'Pick PDF to DOCX',
-            label: const Text(
-              'DOCX',
-              style: TextStyle(
-                color: Colors.white
+      : Padding(
+        padding: const EdgeInsets.only(bottom: 40.0, left: 24.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            FloatingActionButton.extended(
+              onPressed: _pickPDFtoDOCX,
+              tooltip: 'Pick PDF to DOCX',
+              label: const Text(
+                'to DOCX',
+                style: TextStyle(
+                  color: Colors.white
+                ),
               ),
+              icon: const Icon(Icons.sync, color: Colors.white),
             ),
-            icon: const Icon(Icons.file_upload, color: Colors.white),
-          ),
-          FloatingActionButton.extended(
-            onPressed: _pickPDFtoPPTX,
-            tooltip: 'Pick PDF to PPTX',
-            label: const Text(
-              'PPTX',
-              style: TextStyle(
-                color: Colors.white
+            FloatingActionButton.extended(
+              onPressed: _pickPDFtoPPTX,
+              tooltip: 'Pick PDF to PPTX',
+              label: const Text(
+                'to PPTX',
+                style: TextStyle(
+                  color: Colors.white
+                ),
               ),
-            ),
-            icon: const Icon(Icons.file_upload, color: Colors.white),
-          )
-        ],
+              icon: const Icon(Icons.sync, color: Colors.white),
+            )
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(),
             )
           : _pages.isEmpty
-              ? const Center(
-                  child: Text('Please select a PDF file',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 40.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/undraw_online_reading_np7n.png'
+                        ),
+                        const Text('Please select a PDF file to convert',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
