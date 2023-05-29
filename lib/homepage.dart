@@ -7,6 +7,7 @@ import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:textify/convert_result.dart';
 
 class PdfToImageConverter extends StatefulWidget {
   const PdfToImageConverter({Key? key}) : super(key: key);
@@ -41,36 +42,41 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _convertPdfToImagesDOCX() async {
     setState(() {
       _isLoading = true;
-      _pages.clear();
+      // _pages.clear();
     }); 
 
     try {
       final document = await PdfDocument.openFile(_pdfPath);
+      print(_pdfPath);
 
-      for (int i = 1; i <= document.pagesCount; i++) {
-        final page = await document.getPage(i);
+      // for (int i = 1; i <= document.pagesCount; i++) {
+      final page = await document.getPage(1);
 
-        // Render PDF page to image
-        final pageImage = await page.render(
-          width: page.width,
-          height: page.height
-        );
+      // Render PDF page to image
+      final pageImage = await page.render(
+        width: page.width,
+        height: page.height
+      );
 
-        // Save image to temporary directory
-        final tempDir = await getTemporaryDirectory();
-        final imagePath = '${tempDir.path}/image.png';
+      // Save image to temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final imagePath = '${tempDir.path}/image.png';
 
-        final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
+      // final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
+      print(imagePath);
 
-        _pages.add(File(imagePath).readAsBytesSync());
+      await File(imagePath).readAsBytesSync();
 
-        await page.close();
-      }
+      await page.close();
+      // }
 
       await document.close();
 
-      _uploadImageDOCX(_pages[0]);
-      
+      await _uploadImageDOCX(File(imagePath).readAsBytesSync());
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ConvertResult(fileType: 'docx')),
+      );
     } catch (e) {
       print('Error occurred while rendering PDF: $e');
     } finally {
@@ -84,7 +90,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.43.222:3000/upload?fileType=docx'),
+      Uri.parse('http://192.168.1.9:3000/upload?fileType=docx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
@@ -125,35 +131,39 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _convertPdfToImagesPPTX() async {
     setState(() {
       _isLoading = true;
-      _pages.clear();
+      // _pages.clear();
     }); 
 
     try {
       final document = await PdfDocument.openFile(_pdfPath);
 
-      for (int i = 1; i <= document.pagesCount; i++) {
-        final page = await document.getPage(i);
+      // for (int i = 1; i <= document.pagesCount; i++) {
+      final page = await document.getPage(1);
 
-        // Render PDF page to image
-        final pageImage = await page.render(
-          width: page.width,
-          height: page.height
-        );
+      // Render PDF page to image
+      final pageImage = await page.render(
+        width: page.width,
+        height: page.height
+      );
 
-        // Save image to temporary directory
-        final tempDir = await getTemporaryDirectory();
-        final imagePath = '${tempDir.path}/image.png';
+      // Save image to temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final imagePath = '${tempDir.path}/image.png';
 
-        final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
+      // final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
 
-        _pages.add(File(imagePath).readAsBytesSync());
+      await File(imagePath).writeAsBytes(pageImage!.bytes);
 
-        await page.close();
-      }
+      await page.close();
+      // }
 
       await document.close();
 
-      _uploadImagePPTX(_pages[0]);
+      await _uploadImagePPTX(File(imagePath).readAsBytesSync());
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ConvertResult(fileType: 'pptx',)),
+      );
       
     } catch (e) {
       print('Error occurred while rendering PDF: $e');
@@ -168,7 +178,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _uploadImagePPTX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.43.222:3000/upload?fileType=pptx'),
+      Uri.parse('http://192.168.1.9:3000/upload?fileType=pptx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
@@ -215,6 +225,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             FloatingActionButton.extended(
+              heroTag: 'btnDocx',
               onPressed: _pickPDFtoDOCX,
               tooltip: 'Pick PDF to DOCX',
               label: const Text(
@@ -226,6 +237,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
               icon: const Icon(Icons.sync, color: Colors.white),
             ),
             FloatingActionButton.extended(
+              heroTag: 'btnPptx',
               onPressed: _pickPDFtoPPTX,
               tooltip: 'Pick PDF to PPTX',
               label: const Text(
@@ -264,21 +276,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
                     ),
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(10),
-                  itemCount: _pages.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                  ),
-                  itemBuilder: (BuildContext context, int index) {
-                    return Image.memory(
-                      _pages[index],
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
+              : Container()
     );
   }
 }
