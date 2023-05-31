@@ -7,7 +7,6 @@ import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:textify/convert_result.dart';
 
 class PdfToImageConverter extends StatefulWidget {
   const PdfToImageConverter({Key? key}) : super(key: key);
@@ -20,6 +19,16 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   final List<Uint8List> _pages = [];
   bool _isLoading = false;
   late String _pdfPath;
+
+  
+  Future<void> _requestPermission() async {
+    const platform = MethodChannel('textify');
+    try {
+      await platform.invokeMethod('requestPermissions');
+    } on PlatformException catch (e) {
+      print('Error occurred while requesting permission: ${e.message}');
+    }
+  }
 
   Future<void> _pickPDFtoDOCX() async {
     try {
@@ -38,15 +47,6 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
       });
     } on PlatformException catch (e) {
       print('Error occurred while picking the file: $e');
-    }
-  }
-
-  Future<void> _requestPermission() async {
-    const platform = MethodChannel('textify');
-    try {
-      await platform.invokeMethod('requestPermissions');
-    } on PlatformException catch (e) {
-      print('Error occurred while requesting permission: ${e.message}');
     }
   }
 
@@ -86,10 +86,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
       await _requestPermission();
 
       await _uploadImageDOCX(File(imagePath).readAsBytesSync());
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ConvertResult(fileType: 'docx')),
-      );
+      
     } catch (e) {
       print('Error occurred while rendering PDF: $e');
     } finally {
@@ -99,30 +96,6 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
     }
   }
 
-  // // Upload gambar ke node js (DOCX)
-  // Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
-  //   final request = http.MultipartRequest(
-  //     'POST',
-  //     Uri.parse('http://192.168.1.27:3000/upload?fileType=docx'),
-  //   );
-  //   request.files.add(http.MultipartFile.fromBytes(
-  //     'image',
-  //     imageBytes,
-  //     filename: 'image.png',
-  //   ));
-
-  //   try {
-  //     final response = await request.send();
-  //     if (response.statusCode == 200) {
-  //       print('Image uploaded successfully');
-  //     } else {
-  //       print('Failed to upload image. Error code: ${response.statusCode}');
-  //     }
-  //     print("response: $response");
-  //   } catch (e) {
-  //     print('Error occurred while uploading image: $e');r
-  //   }
-  // }
 // Upload gambar ke node js (DOCX)
 Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
   final request = http.MultipartRequest(
@@ -215,12 +188,9 @@ Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
       // }
 
       await document.close();
+      await _requestPermission();
 
       await _uploadImagePPTX(File(imagePath).readAsBytesSync());
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ConvertResult(fileType: 'pptx',)),
-      );
       
     } catch (e) {
       print('Error occurred while rendering PDF: $e');
@@ -247,6 +217,23 @@ Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
       final response = await request.send();
       if (response.statusCode == 200) {
         print('Image uploaded successfully');
+
+        // Read the response data as bytes
+        final responseBytes = await response.stream.toBytes();
+
+        // Save the response data as a PPTX file in the application's document directory
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final appDocFile = File('${appDocDir.path}/result.pptx');
+        await appDocFile.writeAsBytes(responseBytes);
+
+        // Save the response data to the Flutter device's external storage
+        final downloadDir = await getExternalStorageDirectory();
+        final downloadFile = File('${downloadDir!.path}/result.pptx');
+
+        print("downloaded file: $downloadFile");
+        await downloadFile.writeAsBytes(responseBytes);
+
+        print('File downloaded successfully');
       } else {
         print('Failed to upload image. Error code: ${response.statusCode}');
       }
