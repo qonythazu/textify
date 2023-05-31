@@ -7,6 +7,7 @@ import 'package:native_pdf_renderer/native_pdf_renderer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_file/open_file.dart';
 
 class PdfToImageConverter extends StatefulWidget {
   const PdfToImageConverter({Key? key}) : super(key: key);
@@ -128,6 +129,9 @@ Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
       print("downloaded file: $downloadFile");
       await downloadFile.writeAsBytes(responseBytes);
 
+      // Membuka file menggunakan aplikasi pembaca dokumen bawaan
+      await OpenFile.open(downloadFile.path);
+
       print('File downloaded successfully');
 
       // Now you can use the downloaded DOCX file as needed
@@ -232,6 +236,9 @@ Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
 
         print("downloaded file: $downloadFile");
         await downloadFile.writeAsBytes(responseBytes);
+
+        // Membuka file menggunakan aplikasi pembaca dokumen bawaan
+        await OpenFile.open(downloadFile.path);
 
         print('File downloaded successfully');
       } else {
