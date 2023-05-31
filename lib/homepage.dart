@@ -261,45 +261,110 @@ Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
           ),
         ),
       ),
-      floatingActionButton: _pages.isNotEmpty 
-      ? FloatingActionButton(
-        onPressed: () {
-          Navigator.pushReplacement(context, 
-            MaterialPageRoute(builder: (context) => const PdfToImageConverter())
-          );
-        },
-        child: const Icon(Icons.arrow_back, color: Colors.white),
-      )
-      : Padding(
-        padding: const EdgeInsets.only(bottom: 40.0, left: 24.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            FloatingActionButton.extended(
-              heroTag: 'btnDocx',
-              onPressed: _pickPDFtoDOCX,
-              tooltip: 'Pick PDF to DOCX',
-              label: const Text(
-                'to DOCX',
-                style: TextStyle(
-                  color: Colors.white
-                ),
+      drawer: Drawer(
+        child: ListView(
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Color(0xff6C63FF),
               ),
-              icon: const Icon(Icons.sync, color: Colors.white),
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  "Textify",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold
+                  ),
+                )
+              )
             ),
-            FloatingActionButton.extended(
-              heroTag: 'btnPptx',
-              onPressed: _pickPDFtoPPTX,
-              tooltip: 'Pick PDF to PPTX',
-              label: const Text(
-                'to PPTX',
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0,horizontal: 10.0),
+              child: Text(
+                "With OCR",
                 style: TextStyle(
-                  color: Colors.white
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold
                 ),
               ),
-              icon: const Icon(Icons.sync, color: Colors.white),
-            )
-          ],
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.sync,
+                color: Color(0xff6C63FF),
+                size: 24,
+              ),
+              title: const Text(
+                "Convert To DOCX",
+                style: TextStyle(
+                  color: Color(0xff6C63FF),
+                  fontWeight: FontWeight.w500
+                ),
+              ),
+              onTap: _pickPDFtoDOCX,
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.sync,
+                color: Color(0xff6C63FF),
+                size: 24,
+              ),
+              title: const Text(
+                "Convert To PPTX",
+                style: TextStyle(
+                  color: Color(0xff6C63FF),
+                  fontWeight: FontWeight.w500
+                ),
+              ),
+              onTap: _pickPDFtoPPTX,
+            ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.only(top: 40.0,left: 10.0,right: 10.0,bottom: 8.0),
+              child: Text(
+                "Without OCR",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.sync,
+                color: Color(0xff6C63FF),
+                size: 24,
+              ),
+              title: const Text(
+                "Convert To DOCX",
+                style: TextStyle(
+                  color: Color(0xff6C63FF),
+                  fontWeight: FontWeight.w500
+                ),
+              ),
+              onTap: (){},
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.sync,
+                color: Color(0xff6C63FF),
+                size: 24,
+              ),
+              title: const Text(
+                "Convert To PPTX",
+                style: TextStyle(
+                  color: Color(0xff6C63FF),
+                  fontWeight: FontWeight.w500
+                ),
+              ),
+              onTap: (){},
+            ),
+            const Divider(),
+          ]
         ),
       ),
       body: _isLoading
