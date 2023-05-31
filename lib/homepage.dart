@@ -28,6 +28,8 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
         allowedExtensions: ['pdf'],
       );
 
+      print("file result: $result");
+
       if (result == null || result.files.single.path == null) return;
 
       setState(() {
@@ -36,6 +38,15 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
       });
     } on PlatformException catch (e) {
       print('Error occurred while picking the file: $e');
+    }
+  }
+
+  Future<void> _requestPermission() async {
+    const platform = MethodChannel('textify');
+    try {
+      await platform.invokeMethod('requestPermissions');
+    } on PlatformException catch (e) {
+      print('Error occurred while requesting permission: ${e.message}');
     }
   }
 
@@ -58,19 +69,21 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
         height: page.height
       );
 
+      print("pageImage: $pageImage");
+
       // Save image to temporary directory
       final tempDir = await getTemporaryDirectory();
       final imagePath = '${tempDir.path}/image.png';
 
       // final imageFile = await File(imagePath).writeAsBytes(pageImage!.bytes);
-      print(imagePath);
 
-      await File(imagePath).readAsBytesSync();
+      await File(imagePath).writeAsBytes(pageImage!.bytes);
 
       await page.close();
       // }
 
       await document.close();
+      await _requestPermission();
 
       await _uploadImageDOCX(File(imagePath).readAsBytesSync());
       Navigator.push(
@@ -86,29 +99,73 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
     }
   }
 
-  // Upload gambar ke node js (DOCX)
-  Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.1.9:3000/upload?fileType=docx'),
-    );
-    request.files.add(http.MultipartFile.fromBytes(
-      'image',
-      imageBytes,
-      filename: 'image.png',
-    ));
+  // // Upload gambar ke node js (DOCX)
+  // Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
+  //   final request = http.MultipartRequest(
+  //     'POST',
+  //     Uri.parse('http://192.168.1.27:3000/upload?fileType=docx'),
+  //   );
+  //   request.files.add(http.MultipartFile.fromBytes(
+  //     'image',
+  //     imageBytes,
+  //     filename: 'image.png',
+  //   ));
 
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        print('Image uploaded successfully');
-      } else {
-        print('Failed to upload image. Error code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error occurred while uploading image: $e');
+  //   try {
+  //     final response = await request.send();
+  //     if (response.statusCode == 200) {
+  //       print('Image uploaded successfully');
+  //     } else {
+  //       print('Failed to upload image. Error code: ${response.statusCode}');
+  //     }
+  //     print("response: $response");
+  //   } catch (e) {
+  //     print('Error occurred while uploading image: $e');r
+  //   }
+  // }
+// Upload gambar ke node js (DOCX)
+Future<void> _uploadImageDOCX(Uint8List imageBytes) async {
+  final request = http.MultipartRequest(
+    'POST',
+    Uri.parse('http://192.168.1.27:3000/upload?fileType=docx'),
+  );
+  request.files.add(http.MultipartFile.fromBytes(
+    'image',
+    imageBytes,
+    filename: 'image.png',
+  ));
+
+  try {
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      print('Image uploaded successfully');
+
+      // Read the response data as bytes
+      final responseBytes = await response.stream.toBytes();
+
+      // Save the response data as a DOCX file in the application's document directory
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final appDocFile = File('${appDocDir.path}/result.docx');
+      await appDocFile.writeAsBytes(responseBytes);
+
+      // Save the response data to the Flutter device's external storage
+      final downloadDir = await getExternalStorageDirectory();
+      final downloadFile = File('${downloadDir!.path}/result.docx');
+
+      print("downloaded file: $downloadFile");
+      await downloadFile.writeAsBytes(responseBytes);
+
+      print('File downloaded successfully');
+
+      // Now you can use the downloaded DOCX file as needed
+      // For example, open the file using a third-party package or share it with other apps
+    } else {
+      print('Failed to upload image. Error code: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error occurred while uploading image: $e');
   }
+}
 
   Future<void> _pickPDFtoPPTX() async {
     try {
@@ -178,7 +235,7 @@ class _PdfToImageConverterState extends State<PdfToImageConverter> {
   Future<void> _uploadImagePPTX(Uint8List imageBytes) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.1.9:3000/upload?fileType=pptx'),
+      Uri.parse('http://192.168.1.27:3000/upload?fileType=pptx'),
     );
     request.files.add(http.MultipartFile.fromBytes(
       'image',
